@@ -1,5 +1,9 @@
 # Swift-Posix-Thread
 
+## Test
+
+Only test in `macos` and  `Android`,  because I dont have `Ubuntu` or `LinuxMint`.
+
 ## Usage
 
 ```swift

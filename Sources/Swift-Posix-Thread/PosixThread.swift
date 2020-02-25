@@ -11,6 +11,32 @@ private class PThreadParam {
 }
 
 /// c function
+#if os(Android)
+private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
+    let pStatus = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+    defer {
+        pStatus.deallocate()
+    }
+    pStatus.pointee = EXIT_SUCCESS
+    
+    if let pPThreadParam = pPThreadParam {
+        defer {
+            pPThreadParam.deallocate()
+        }
+        
+        let pthreadParam = pPThreadParam.load(as: PThreadParam.self)
+        
+        do {
+            pthreadParam.mResult = try pthreadParam.mBlock()
+        } catch {
+            pStatus.pointee = EXIT_FAILURE
+        }
+    }
+    
+    pthread_exit(pStatus)
+}
+
+#else
 private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer) -> UnsafeMutableRawPointer? {
     defer {
         pPThreadParam.deallocate()
@@ -31,6 +57,7 @@ private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer) -> UnsafeMuta
     }
     pthread_exit(pStatus)
 }
+#endif
 
 public class PosixThread<Result> {
     private let mPThread: pthread_t?
@@ -39,7 +66,12 @@ public class PosixThread<Result> {
     
     private init?(_ pthreadParam: PThreadParam) {
         //
+        #if os(Android)
+        let pPThread = UnsafeMutablePointer<pthread_t>.allocate(capacity: 1)
+        
+        #else
         let pPThread = UnsafeMutablePointer<pthread_t?>.allocate(capacity: 1)
+        #endif
         defer {
             pPThread.deallocate()
         }
@@ -127,7 +159,13 @@ public class PosixThread<Result> {
     
     public func cancel() -> Bool {
         if let pthread = mPThread {
+            #if os(Android)
+            // ndk 20
+            // bits/posix_limits.h:86:#define _POSIX_THREADS _POSIX_VERSION /* Strictly, pthread_cancel/pthread_testcancel are missing. */
+            return false
+            #else
             return pthread_cancel(pthread) == 0
+            #endif
         } else {
             return false
         }
