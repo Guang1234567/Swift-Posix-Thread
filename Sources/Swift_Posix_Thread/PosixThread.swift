@@ -60,7 +60,7 @@ private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer) -> UnsafeMuta
 #endif
 
 public class PosixThread<Result> {
-    private let mPThread: pthread_t?
+    private var mPThread: pthread_t?
     
     private let mPThreadParam: PThreadParam
     
@@ -68,7 +68,6 @@ public class PosixThread<Result> {
         //
         #if os(Android)
         let pPThread = UnsafeMutablePointer<pthread_t>.allocate(capacity: 1)
-        
         #else
         let pPThread = UnsafeMutablePointer<pthread_t?>.allocate(capacity: 1)
         #endif
@@ -125,6 +124,8 @@ public class PosixThread<Result> {
                 return nil
             }
             
+            mPThread = nil
+            
             if let pStatus: UnsafeMutableRawPointer = ppStatus.pointee {
                 defer {
                     pStatus.deallocate()
@@ -136,7 +137,6 @@ public class PosixThread<Result> {
                         return nil
                     }
                 } else {
-                    print("Join status = \(pStatus.load(as: Int32.self))")
                     return nil
                 }
             } else {
@@ -151,7 +151,12 @@ public class PosixThread<Result> {
     /// https://docs.oracle.com/cd/E19253-01/819-7051/6n919hpa9/index.html#tlib-12602
     public func detach() -> Bool {
         if let pthread = mPThread {
-            return pthread_detach(pthread) == 0
+            if pthread_detach(pthread) == 0 {
+                mPThread = nil
+                return true
+            } else {
+                return false
+            }
         } else {
             return false
         }
@@ -164,7 +169,12 @@ public class PosixThread<Result> {
             // bits/posix_limits.h:86:#define _POSIX_THREADS _POSIX_VERSION /* Strictly, pthread_cancel/pthread_testcancel are missing. */
             return false
             #else
-            return pthread_cancel(pthread) == 0
+            if pthread_cancel(pthread) == 0 {
+                mPThread = nil
+                return true
+            } else {
+                return false
+            }
             #endif
         } else {
             return false
