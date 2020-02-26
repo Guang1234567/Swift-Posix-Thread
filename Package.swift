@@ -9,7 +9,9 @@ let package = Package(
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(
             name: "Swift-Posix-Thread",
+            type: .dynamic,
             targets: ["Swift_Posix_Thread"]),
+        .executable(name: "Example-Swift-Posix-Thread", targets: ["Example-Swift-Posix-Thread"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -21,8 +23,10 @@ let package = Package(
         .target(
             name: "Swift_Posix_Thread",
             dependencies: []),
+        .target(
+        name: "Example-Swift-Posix-Thread",
+        dependencies: ["Swift_Posix_Thread"]),
         .testTarget(
             name: "Swift_Posix_ThreadTests",
             dependencies: ["Swift_Posix_Thread"]),
-    ]
-)
+    ])

@@ -38,15 +38,15 @@ private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer?) -> UnsafeMut
 
 #else
 private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer) -> UnsafeMutableRawPointer? {
-    defer {
-        pPThreadParam.deallocate()
-    }
-    
     let pStatus = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
     defer {
         pStatus.deallocate()
     }
     pStatus.pointee = EXIT_SUCCESS
+    
+    defer {
+        pPThreadParam.deallocate()
+    }
     
     let pthreadParam = pPThreadParam.load(as: PThreadParam.self)
     
@@ -55,6 +55,7 @@ private func cStartRoutine(pPThreadParam: UnsafeMutableRawPointer) -> UnsafeMuta
     } catch {
         pStatus.pointee = EXIT_FAILURE
     }
+    
     pthread_exit(pStatus)
 }
 #endif
