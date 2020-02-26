@@ -59,3 +59,36 @@ if let pthread2: PosixThread<Void> = PosixThread({ () in
 } else {
     print("create Posix thread2 fail!")
 }
+
+print("\n-----------------mutex---------------------\n")
+
+let q_one = DispatchQueue(label: "one")
+let q_two = DispatchQueue(label: "two")
+let group = DispatchGroup()
+var counter = 0
+let mutex: PosixMutex? = PosixMutex()
+func operation() {
+    for _ in 0 ..< 800 {
+        mutex?.with {
+            counter += 1
+        }
+    }
+    print("finished")
+}
+
+q_one.async(group: group, execute: operation)
+q_two.async(group: group, execute: operation)
+group.wait()
+print(counter)
+
+print("\n-----------------rwlock---------------------\n")
+
+let rwLock: PosixRwLock? = PosixRwLock()
+
+rwLock?.withRead {
+    // ...
+}
+
+rwLock?.withWrite {
+    // ...
+}

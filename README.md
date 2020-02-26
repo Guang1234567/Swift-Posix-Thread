@@ -4,11 +4,24 @@
 
 Only test in `Macos` and  `Android`,  because I dont have `Ubuntu` or `LinuxMint`.
 
+## API
+
+-  PosixThread
+
+-  PosixMutex    - a block lock
+
+-  PosixRwLock    -  a read-write lock
+
+- PosixSemaphore - a semaphore
+
 ## Usage
 
 ```swift
 
+
 import Foundation
+
+import Swift_Posix_Thread
 
 class ThreadParameter {
     var threadIdentifier: String
@@ -66,6 +79,39 @@ if let pthread2: PosixThread<Void> = PosixThread({ () in
     }
 } else {
     print("create Posix thread2 fail!")
+}
+
+print("\n-----------------mutex---------------------\n")
+
+let q_one = DispatchQueue(label: "one")
+let q_two = DispatchQueue(label: "two")
+let group = DispatchGroup()
+var counter = 0
+let mutex: PosixMutex? = PosixMutex()
+func operation() {
+    for _ in 0 ..< 800 {
+        mutex?.with {
+            counter += 1
+        }
+    }
+    print("finished")
+}
+
+q_one.async(group: group, execute: operation)
+q_two.async(group: group, execute: operation)
+group.wait()
+print(counter)
+
+print("\n-----------------rwlock---------------------\n")
+
+let rwLock: PosixRwLock? = PosixRwLock()
+
+rwLock?.withRead {
+    // ...
+}
+
+rwLock?.withWrite {
+    // ...
 }
 
 
